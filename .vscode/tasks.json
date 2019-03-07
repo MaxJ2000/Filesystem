@@ -1,0 +1,24 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "launch webpack",
+            "type": "shell",
+            "command": "npm run start"
+        },
+        {
+            "label": "launch Chrome Dev",
+            "type": "shell",
+            "command":"start chrome",
+            "args": ["--new-window","--remote-debugging-port=9222",
+                "--user-data-dir","http://localhost:8080/"]
+        },
+        {
+            "label": "start dev",
+            "dependsOn":["launch webpack",
+                "launch Chome Dev"],
+        }
+    ]
+}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>MaxJ Filesystem</title>
+</head>
+<style>
+    body {
+        background: black;
+        color: white;
+        font-size: 16px;
+        font-family: Consolas, monospace;
+        margin:8px 0 0 8px;
+    }
+
+    .stdin {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        border: 0;
+        width: 80%;
+        background: black;
+        color: white;
+        outline: 0;
+        padding: 0;
+        font-size: 16px;
+        font-family:Consolas, monospace;
+    }
+    .stdinInput{
+        border: 0;
+        flex:1 1;
+        margin-left: 9px;
+        background: black;
+        color: white;
+        outline: 0;
+        padding: 0;
+        font-size: 16px;
+        font-family:Consolas, monospace;
+    }
+    .stdout {
+        margin: 0;
+    }
+</style>
+<body>
+    <div class="root">
+        <div class="stdout"></div>
+        <div class="stdin">
+            <span>[root@MaxJ ~] </span>
+            <input class="stdinInput" value=""/>
+        </div>
+    </div>
+    </body>
+</html>
