@@ -16,7 +16,7 @@ let REG: IREG = {
   paraCMD: /(?:\s*[-]*)([\./\w\d\-\_\?]+)/g,
 }
 class Data implements IData {
-  type: string;
+  type: "dir" | "file";
   content: string;
   name: string;
   child: Data[];
@@ -71,21 +71,23 @@ export default class Filesystem {
       switchCase.bind(this)();
       localStorage.setItem('filesystem', JSON.stringify(this.rootDirObj));
     } catch (displayError) {
+      console.log(this.curDirObj.name);
       return displayError.toString();
     }
+    console.log(this.curDirObj.name);
     return displayString;
   }
   public loadData(): void {
     let dataString: string | null = localStorage.getItem('filesystem');
     if (dataString) {
       this.rootDirObj = JSON.parse(dataString);
-      this.curDirObj=this.rootDirObj;
+      this.curDirObj = this.rootDirObj;
       this.addDirFunc();
     } else {
       this.rootDirObj = new Data('dir', 'home');
     }
   }
-  addDirFunc(where:Data=this.curDirObj): void {
+  addDirFunc(where: Data = this.curDirObj): void {
     function getChild(this: Data, name: string): Data {
       for (let child of this.child) {
         if (child.name === name) {
@@ -143,24 +145,24 @@ export default class Filesystem {
           if (this.rootDirObj.name === path) {
             parseResult = this.rootDirObj;
           } else {
-            parseResult=this.curDirObj.getChild(path);
+            parseResult = this.curDirObj.getChild(path);
           }
         }
       }
     }
     return <Data>parseResult;
   }
-  ls(para: string|undefined): string {
+  ls(para: string | undefined): string {
     let returnString: string;
     let nameArray: string[] = [];
     let displayHidden: boolean = false;
-    let match:RegExpExecArray|null;
-    if(para){
-      while(match=REG.paraCMD.exec(para)){
-        switch(match[1]){
+    let match: RegExpExecArray | null;
+    if (para) {
+      while (match = REG.paraCMD.exec(para)) {
+        switch (match[1]) {
           case 'a':
-          case 'A':displayHidden=true;break;
-          default:break;
+          case 'A': displayHidden = true; break;
+          default: break;
         }
       }
     }
@@ -182,10 +184,10 @@ export default class Filesystem {
     return returnString;
   }
   mkdir(para: string): string {
-    if(!para){
+    if (!para) {
       return '0';
     }
-    let pathArray: string[]=para.split('/');
+    let pathArray: string[] = para.split('/');
     let operateDirObj: Data;
     let name: string | undefined = pathArray.pop();
     if (pathArray.length === 0) {
@@ -220,43 +222,81 @@ export default class Filesystem {
     return '0';
   }
   cd(pathString: string): string {
-    if(!pathString){
+    if (!pathString) {
       throw new Error('Illegal Input!');
     }
     this.curDirObj = this.parsePath(pathString);
     return '0';
   }
-  cp(pathString: string): string {
+  cp(para: string): string {
     let returnString: string;
+    let cpItem: Data;
+    let toHere: Data;
+    let path: RegExpExecArray | null;
+    let aimName: string | undefined;
+    let toHereArray: string[];
+    let toHerePath: string;
+    if (!para) {
+      throw new Error('Illegal Input!');
+    }
+    REG.paraCMD.lastIndex = 0;
+    if (path = REG.paraCMD.exec(para)) {
+      cpItem = this.parsePath(path[1]);
+      if(cpItem.type==='dir'){
+        throw new Error(`Can't copy Direcion`);
+      }
+    } else {
+      throw Error('para 1 Illegal!');
+    }
+    if (path = REG.paraCMD.exec(para)) {
+      toHereArray = path[1].split('/');
+      aimName = toHereArray.pop();
+      toHerePath = toHereArray.join('/');
+      if (aimName) {
+        toHere = this.parsePath(toHerePath);
+        for (let child of toHere.child) {
+          if (child.name === aimName) {
+            throw Error(`${aimName} already existed!`);
+          }
+        }
+        toHere.child.push(new Data(cpItem.type, aimName, cpItem.content));
+        this.addDirFunc(toHere);
+      } else {
+        throw Error('para 2 Illegal!');
+      }
+    }else{
+      throw Error('para 2 Illegal!');
+    }
+    REG.paraCMD.lastIndex = 0;
     return '0';
   }
   rm(para: string): string {
-    let recursiveRemove:boolean=false;
-    let match:RegExpExecArray|null;
-    let operateDirObj:Data;
+    let recursiveRemove: boolean = false;
+    let match: RegExpExecArray | null;
+    let operateDirObj: Data;
     if (para) {
       while (match = REG.paraCMD.exec(para)) {
         switch (match[1]) {
           case 'r':
           case 'R': recursiveRemove = true; break;
-          default: REG.paraCMD.lastIndex = 0; 
-          operateDirObj=this.parsePath(match[1]);
-          if (operateDirObj.child.length!==0&&recursiveRemove===false){
-            return `Warning: use "\\r" option to recursive delete!`;
-          }else{
-            if(operateDirObj==this.rootDirObj){
-              throw new Error("You can't delete home!");
-            }else{
-              let operateDirObjFather: Data = operateDirObj.getFather()
-              operateDirObjFather.child.forEach((curObj,index)=>{
-                if(curObj===operateDirObj){
-                  operateDirObjFather.child.splice(index,1);
-                  return;
-                }
-              })
+          default: REG.paraCMD.lastIndex = 0;
+            operateDirObj = this.parsePath(match[1]);
+            if (operateDirObj.child.length !== 0 && recursiveRemove === false) {
+              return `Warning: use "\\r" option to recursive delete!`;
+            } else {
+              if (operateDirObj == this.rootDirObj) {
+                throw new Error("You can't delete home!");
+              } else {
+                let operateDirObjFather: Data = operateDirObj.getFather()
+                operateDirObjFather.child.forEach((curObj, index) => {
+                  if (curObj === operateDirObj) {
+                    operateDirObjFather.child.splice(index, 1);
+                    return;
+                  }
+                })
+              }
             }
-          }
-          return '0';
+            return '0';
         }
       }
     }
@@ -267,3 +307,4 @@ export default class Filesystem {
     return '0';
   }
 }
+
